@@ -3,17 +3,21 @@ from airflow.sdk import task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from datetime import datetime, timedelta
 from airflow.sdk import timezone
+import os
 import json
 import requests
 import time
 import re
 from airflow.models import Variable
+from airflow.utils.log.logging_mixin import LoggingMixin
+
 
 #Configuration
 POSTGRES_CONN_ID = 'postgres_default'
 
 SUBREDDIT_NAME = ['MachineLearning', 'DataScience','Python']
 POST_LIMIT = 100
+
 
 default_args = {
     'owner': 'airflow',
@@ -27,10 +31,15 @@ with DAG(
     catchup = False
 ) as dag:
 
+    logger = LoggingMixin().log
+
     @task
     def extract_reddit_posts():
+
+        logger.info("Extracting Reddit posts")
         posts = []
         for subreddit in SUBREDDIT_NAME:
+            logger.info(f"Initiating extraction for subreddit: {subreddit}")
             url = f'https://www.reddit.com/r/{subreddit}/new.json?limit={POST_LIMIT}'
             headers = {'User-Agent': 'reddit-summarizer/0.1'}
 
@@ -52,12 +61,14 @@ with DAG(
                 time.sleep(1)
             else:
                 raise Exception(f'Failed to fetch data from {url} for subreddit {subreddit}')
-        
+
+        logger.info(f"Extracted {len(posts)} posts from {len(SUBREDDIT_NAME)} subreddits")
         return posts
 
     @task
     def transform_reddit_posts(posts):
 
+        logger.info("Transforming the Reddit posts")
         cleaned_posts = []
 
         for post in posts:
@@ -90,15 +101,17 @@ with DAG(
                 "num_comments": post['num_comments'],
                 "permalink": post['permalink']
             })
-
+        
+        logger.info(f"Transformed {len(cleaned_posts)} posts")
         return cleaned_posts
 
     @task
     def load_reddit_posts(cleaned_posts):
+        logger.info("Loading the Reddit posts into the database")
+
         pg_hook = PostgresHook(postgres_conn_id = POSTGRES_CONN_ID)
         conn = pg_hook.get_conn()
         cursor = conn.cursor()
-
 
         # Creating the Subreddit table
         cursor.execute("""
@@ -121,7 +134,7 @@ with DAG(
                 created_utc TIMESTAMP);
             """)
 
-        # Upsert subreddits first
+        # Inserting subreddits first
         subreddit_names = list(set(post['subreddit'] for post in cleaned_posts))
         for name in subreddit_names:
             cursor.execute("""
@@ -133,7 +146,7 @@ with DAG(
 
         conn.commit()
 
-        # Insert posts with subreddit_id lookup
+        # Inserting posts with subreddit_id lookup
         for post in cleaned_posts:
             cursor.execute("""
             INSERT INTO Posts (post_id, subreddit_id, title, full_text, body,
@@ -157,6 +170,8 @@ with DAG(
         conn.commit()
         cursor.close()
         conn.close()
+
+    logger.info("Reddit posts ingestion completed successfully")
 
     # DAG Workflow - ETL Pipeline
     posts = extract_reddit_posts()
