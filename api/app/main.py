@@ -1,0 +1,189 @@
+from fastapi import FastAPI, Depends, Query
+from psycopg2.extensions import connection as PgConn
+from psycopg2.extras import RealDictCursor
+from .db import open_pool, close_pool, get_conn
+
+app = FastAPI(
+    title="Reddit Insights API",
+    description="Trend-aware summarization of ML, Python and Data Science discussions",
+    verison="1.0.0"
+)
+
+@app.on_event("startup")
+def _startup():
+    open_pool()
+
+@app.on_event("shutdown")
+def _shutdown():
+    close_pool()
+
+@app.get("/")
+def root():
+    return {"service": "reddit-summarizer-api", "status": "ok"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "reddit-summarizer-api"}
+
+@app.get("/trends")
+def get_trending_topics(
+    days : int = Query(7, ge=1, le=365),
+    limit : int = Query(10, ge=1, le=100),
+    conn: PgConn = Depends(get_conn)
+    ):
+
+    sql = """
+    SELECT 
+        LOWER(regexp_replace(word, '[^a-zA-Z]', '', 'g')) AS topic,
+        COUNT(*) AS mentions
+    FROM (
+        SELECT unnest(string_to_array(full_text, ' ')) AS word
+        FROM Posts
+        WHERE created_utc >= NOW() - make_interval(days => %s)
+        ) AS t
+    WHERE LENGTH(word) > 4
+    GROUP BY topic
+    ORDER BY mentions DESC
+    LIMIT %s;
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, (days, limit))
+        results = cur.fetchall()
+
+    return {"window_days": days, "trending_topics": results}
+
+@app.get("/summaries")
+def get_topic_summaries(
+    topic : str = Query(..., min_length=2, description="Topic keyword"),
+    limit : int = Query(5, ge=1, le=50),
+    conn : PgConn = Depends(get_conn),     
+): 
+    sql = """
+    SELECT
+        p.post_id,
+        p.title,
+        sub.name,
+        p.score,
+        s.summary_text
+    FROM Posts p
+    LEFT JOIN Summary s
+    ON p.post_id = s.post_id
+    INNER JOIN Subreddit sub 
+    ON p.subreddit_id = sub.subreddit_id
+    WHERE p.full_text ILIKE %s
+    ORDER BY p.score DESC
+    LIMIT %s;
+    """
+    with conn.cursor() as cur:
+        cur.execute(sql, (f"%{topic}%", limit))
+        posts = cur.fetchall()
+
+    return {"topic": topic, "posts_analyzed": len(posts), "summaries": posts}
+
+@app.get("/beginner/insights")
+def beginner_insights(
+    days : int = Query(7, ge=1, le=365),
+    conn : PgConn = Depends(get_conn)
+):
+    
+    sql = """
+    SELECT title, score
+    FROM posts
+    WHERE created_utc >= NOW() - make_interval(days => %s)
+    AND (
+    full_text ILIKE %s
+    OR full_text ILIKE %s
+    OR full_text ILIKE %s
+    OR full_text ILIKE %s
+    )
+    ORDER BY score DESC
+    LIMIT 10;
+    """
+
+    params = (
+    days,
+    "%beginner%",
+    "%how to%",
+    "%roadmap%",
+    "%confused%",
+    )
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(sql, params)
+        posts = cur.fetchall()
+
+    recommendations = [
+        {
+            "insight": f"Beginners are actively discussing: {p['title']}",
+            "score": p["score"]
+        }
+        for p in posts
+    ]
+
+    return {
+        "window_days": days,
+        "recommended_learning_focus": recommendations,
+        "posts_used": len(posts) 
+    }
+
+@app.get("/monitoring")
+def pipeline_monitoring(conn :PgConn = Depends(get_conn)):
+    sql = """
+    SELECT 
+        COUNT(*) AS total_posts,
+        COUNT(s.summary_text) AS summarized_posts
+    FROM Posts p
+    LEFT JOIN Summary s
+    ON p.post_id = s.post_id"""
+
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        data = cur.fetchone()
+
+    total_posts = data['total_posts'] or 0
+    summarized_posts = data['summarized_posts'] or 0
+    coverage = (summarized_posts / total_posts * 100) if total_posts else 0.0
+
+    return {
+        "total_posts" : total_posts,
+        "summarized_posts" : summarized_posts,
+        "summary_coverage_pct" : round(coverage, 2),
+        "pipeline_status" : "healthy" if coverage > 80 else "degraded"
+
+    }
+
+@app.get("/search")
+def search_posts(
+    query : str = Query(..., min_length = 2),
+    subreddit : str | None = None,
+    limit : int = Query(20, ge=1, le=200),
+    conn : PgConn = Depends(get_conn),
+):
+    sql = """
+    SELECT p.title, p.score, p.permalink,s.name AS subreddit
+    FROM Posts p
+    JOIN Subreddit s ON p.subreddit_id = s.subreddit_id
+    WHERE p.full_text ILIKE %s
+    """
+
+    params: list[object] = [f"%{query}%"]
+
+    if subreddit:
+        sql += " AND s.name = %s"
+        params.append(subreddit)
+
+    sql += " ORDER BY p.score DESC LIMIT %s"
+    params.append(limit)
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(sql, tuple(params))
+        results = cur.fetchall()
+
+    return {"query" : query,
+    "subreddit_filter": subreddit,
+    "results_count": len(results), 
+    "results": results}    
+
+
+
+
+

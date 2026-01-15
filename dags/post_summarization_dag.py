@@ -51,6 +51,15 @@ with DAG(
         );
         """)
 
+        # Adding unique constraint for ON CONFLICT target
+        pg_hook.run(
+            """
+            ALTER TABLE summary
+            ADD CONSTRAINT summary_post_id_unique UNIQUE (post_id);
+            """,
+            autocommit=True,
+        )
+
         # Fetching the posts for summarization
         logger.info("Fetching the posts to summarize")
         df = pg_hook.get_pandas_df("""
@@ -104,7 +113,9 @@ with DAG(
         for s in summaries:
             cursor.execute("""
             INSERT INTO Summary (post_id, summary_text, model_used)
-            VALUES (%s, %s, %s)""",
+            VALUES (%s, %s, %s)
+            ON CONFLICT (post_id) DO NOTHING
+            """,
             (s['post_id'], s['summary'], s['model_used']))
 
         conn.commit()
