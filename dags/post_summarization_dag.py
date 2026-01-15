@@ -51,14 +51,20 @@ with DAG(
         );
         """)
 
-        # Adding unique constraint for ON CONFLICT target
-        pg_hook.run(
-            """
-            ALTER TABLE summary
-            ADD CONSTRAINT summary_post_id_unique UNIQUE (post_id);
-            """,
-            autocommit=True,
-        )
+        # Adding unique constraint for ON CONFLICT target (only if it doesn't exist)
+        try:
+            pg_hook.run(
+                """
+                ALTER TABLE summary
+                ADD CONSTRAINT summary_post_id_unique UNIQUE (post_id);
+                """,
+                autocommit=True,
+            )
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                logger.info("Constraint already exists, skipping...")
+            else:
+                raise e
 
         # Fetching the posts for summarization
         logger.info("Fetching the posts to summarize")
