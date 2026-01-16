@@ -74,6 +74,7 @@ def get_topic_summaries(
         p.title,
         sub.name,
         p.score,
+        p.permalink,
         s.summary_text
     FROM Posts p
     LEFT JOIN Summary s
