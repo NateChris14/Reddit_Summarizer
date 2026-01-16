@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, Query
+from fastapi.middleware.cors import CORSMiddleware
 from psycopg2.extensions import connection as PgConn
 from psycopg2.extras import RealDictCursor
 from .db import open_pool, close_pool, get_conn
@@ -7,6 +8,15 @@ app = FastAPI(
     title="Reddit Insights API",
     description="Trend-aware summarization of ML, Python and Data Science discussions",
     verison="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
