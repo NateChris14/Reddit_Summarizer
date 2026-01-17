@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from psycopg2.extensions import connection as PgConn
 from psycopg2.extras import RealDictCursor
 from .db import open_pool, close_pool, get_conn
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
 
 app = FastAPI(
     title="Reddit Insights API",
@@ -18,6 +22,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Creating limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.on_event("startup")
 def _startup():
@@ -36,7 +45,9 @@ def health_check():
     return {"status": "ok", "service": "reddit-summarizer-api"}
 
 @app.get("/trends")
+@limiter.limit("100/hour")
 def get_trending_topics(
+    request: Request,
     days : int = Query(7, ge=1, le=365),
     limit : int = Query(10, ge=1, le=100),
     conn: PgConn = Depends(get_conn)
@@ -63,7 +74,9 @@ def get_trending_topics(
     return {"window_days": days, "trending_topics": results}
 
 @app.get("/summaries")
+@limiter.limit("150/hour")
 def get_topic_summaries(
+    request: Request,
     topic : str = Query(..., min_length=2, description="Topic keyword"),
     limit : int = Query(5, ge=1, le=50),
     conn : PgConn = Depends(get_conn),     
@@ -92,7 +105,9 @@ def get_topic_summaries(
     return {"topic": topic, "posts_analyzed": len(posts), "summaries": posts}
 
 @app.get("/beginner/insights")
+@limiter.limit("300/hour")
 def beginner_insights(
+    request: Request,
     days : int = Query(7, ge=1, le=365),
     conn : PgConn = Depends(get_conn)
 ):
@@ -137,7 +152,11 @@ def beginner_insights(
     }
 
 @app.get("/monitoring")
-def pipeline_monitoring(conn :PgConn = Depends(get_conn)):
+@limiter.limit("300/hour")
+def pipeline_monitoring(
+    request: Request,
+    conn :PgConn = Depends(get_conn)
+):
     sql = """
     SELECT 
         COUNT(*) AS total_posts,
@@ -163,7 +182,9 @@ def pipeline_monitoring(conn :PgConn = Depends(get_conn)):
     }
 
 @app.get("/search")
+@limiter.limit("200/hour")
 def search_posts(
+    request: Request,
     query : str = Query(..., min_length = 2),
     subreddit : str | None = None,
     limit : int = Query(20, ge=1, le=200),
