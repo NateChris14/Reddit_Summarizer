@@ -52,7 +52,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_BACKEND }}
           IMAGE_TAG: latest
         run: |
           # Build the API docker container from api/ directory
@@ -61,6 +61,30 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Pull latest API image
+        run: |
+          docker pull \
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
+
+      - name: Stop and remove old API container
+        run: |
+          docker stop reddit-api || true
+          docker rm reddit-api || true
+
+      - name: Run API Docker Image
+        run: |
+          docker run -d -p 8000:8000 \
+          --name=reddit-api \
+          -e PGHOST=${{ secrets.PGHOST }} \
+          -e PGPORT=${{ secrets.PGPORT }} \
+          -e PGDATABASE=${{ secrets.PGDATABASE }} \
+          -e PGUSER=${{ secrets.PGUSER }} \
+          -e PGPASSWORD=${{ secrets.PGPASSWORD }} \
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
+
+      - name: Clean previous images and containers
+        run: docker system prune -f
 
   build-and-push-frontend-image:
     name: Build and Push Frontend Image
@@ -85,7 +109,7 @@ jobs:
         id: build-frontend-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_FRONTEND }}
           IMAGE_TAG: latest
         run: |
           # Build frontend docker container from frontend/ directory
@@ -117,7 +141,7 @@ jobs:
       - name: Pull latest API image
         run: |
           docker pull \
-          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
 
       - name: Stop and remove old API container
         run: |
@@ -133,7 +157,7 @@ jobs:
           -e PGDATABASE=${{ secrets.PGDATABASE }} \
           -e PGUSER=${{ secrets.PGUSER }} \
           -e PGPASSWORD=${{ secrets.PGPASSWORD }} \
-          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
 
       - name: Clean previous images and containers
         run: docker system prune -f
@@ -160,7 +184,7 @@ jobs:
       - name: Pull latest frontend image
         run: |
           docker pull \
-          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
 
       - name: Stop and remove old frontend container
         run: |
@@ -171,7 +195,7 @@ jobs:
         run: |
           docker run -d -p 80:80 \
           --name=ml-hub-frontend \
-          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
 
       - name: Clean previous images and containers
         run: docker system prune -f
