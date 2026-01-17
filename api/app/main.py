@@ -7,6 +7,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
+from .settings import settings
 
 app = FastAPI(
     title="Reddit Insights API",
@@ -17,7 +18,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[settings.frontend_url_1, settings.frontend_url_2],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
