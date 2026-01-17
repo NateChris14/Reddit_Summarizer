@@ -18,7 +18,10 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ml-hub-frontend.onrender.com"],
+    allow_origins=[
+        "https://ml-hub-frontend.onrender.com",
+        "http://13.48.129.99:8000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
