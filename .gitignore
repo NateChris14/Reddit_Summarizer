@@ -1,6 +1,6 @@
 .git
 .env
-local.env
+api\local.env
 prod.env
 .DS_Store
 airflow_settings.yaml

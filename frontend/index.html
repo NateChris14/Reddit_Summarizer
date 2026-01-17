@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Learning Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h1>ML Learning Hub</h1>
+            </div>
+            <nav class="nav">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#monitoring" class="nav-link">Monitoring</a>
+                <a href="#search" class="nav-link">Search</a>
+                <a href="#trends" class="nav-link">Trends</a>
+                <a href="#summaries" class="nav-link">Summaries</a>
+                <a href="#beginner" class="nav-link">Beginner</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Home Section -->
+            <section id="home" class="section active">
+                <div class="hero">
+                    <h2>ML Learning Analytics</h2>
+                    <p>Discover trends, insights, and summaries from machine learning and data science communities</p>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>Smart Search</h3>
+                        <p>Search through hundreds of ML/DS discussions with intelligent filtering and relevance ranking</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Trend Analysis</h3>
+                        <p>Identify emerging topics and trending discussions in real-time from active communities</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3>AI Summaries</h3>
+                        <p>Get concise, AI-powered summaries of complex discussions and technical content</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h3>Beginner Insights</h3>
+                        <p>Discover what beginners are asking about and get personalized learning recommendations</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <h3>System Monitoring</h3>
+                        <p>Track pipeline health, data coverage, and system performance in real-time</p>
+                    </div>
+                </div>
+                
+                <div class="getting-started">
+                    <h3>Getting Started</h3>
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Explore Trends</h4>
+                                <p>See what's hot in ML/DS communities right now</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Search Content</h4>
+                                <p>Find specific discussions, tutorials, and solutions</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Read Summaries</h4>
+                                <p>Get quick insights from AI-generated summaries</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h4>Learn & Grow</h4>
+                                <p>Follow beginner insights to accelerate your learning journey</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monitoring Section -->
+            <section id="monitoring" class="section">
+                <div class="monitoring-container">
+                    <h2>System Monitoring</h2>
+                    <p>Real-time pipeline health, data coverage, and system performance metrics</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-file-alt"></i>
+                            <h3 id="total-posts">Loading...</h3>
+                            <p>Total Posts</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-compress-alt"></i>
+                            <h3 id="summarized-posts">Loading...</h3>
+                            <p>Summarized Posts</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-percentage"></i>
+                            <h3 id="coverage">Loading...</h3>
+                            <p>Coverage</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-heartbeat"></i>
+                            <h3 id="pipeline-status">Loading...</h3>
+                            <p>Pipeline Status</p>
+                        </div>
+                    </div>
+                    
+                    <div class="monitoring-controls">
+                        <button onclick="loadMonitoringData()" class="btn btn-primary">
+                            <i class="fas fa-sync"></i> Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search Section -->
+            <section id="search" class="section">
+                <div class="search-container">
+                    <h2>Smart Search</h2>
+                    <p>Find exactly what you're looking for with intelligent search across ML/DS communities</p>
+                    <div class="search-controls">
+                        <input type="text" id="search-query" placeholder="e.g., 'neural networks', 'pandas tutorial', 'data visualization'" class="search-input">
+                        <select id="search-subreddit" class="filter-select">
+                            <option value="">All Subreddits</option>
+                        </select>
+                        <select id="search-limit" class="filter-select">
+                            <option value="20">20 Results</option>
+                            <option value="50">50 Results</option>
+                            <option value="100">100 Results</option>
+                        </select>
+                        <button onclick="performSearch()" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+
+                <div id="search-results" class="results-container"></div>
+            </section>
+
+            <!-- Trends Section -->
+            <section id="trends" class="section">
+                <div class="trends-container">
+                    <h2>Trending Topics</h2>
+                    <p>Discover what's hot in ML/DS communities - emerging technologies, popular discussions, and trending concepts</p>
+                    <div class="trends-controls">
+                        <select id="trends-days" class="filter-select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                        <select id="trends-limit" class="filter-select">
+                            <option value="10">Top 10</option>
+                            <option value="25">Top 25</option>
+                            <option value="50">Top 50</option>
+                        </select>
+                        <button onclick="loadTrends()" class="btn btn-primary">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div id="trends-results" class="results-container"></div>
+            </section>
+
+            <!-- Summaries Section -->
+            <section id="summaries" class="section">
+                <div class="summaries-container">
+                    <h2>AI-Powered Summaries</h2>
+                    <p>Get concise, intelligent summaries of complex technical discussions - save time and learn faster</p>
+                    <div class="summaries-controls">
+                        <input type="text" id="summary-topic" placeholder="e.g., 'transformers', 'matplotlib', 'sql', 'api'" class="search-input">
+                        <select id="summary-limit" class="filter-select">
+                            <option value="10">10 Results</option>
+                            <option value="25">25 Results</option>
+                            <option value="50">50 Results</option>
+                        </select>
+                        <button onclick="loadSummaries()" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                    </div>
+                </div>
+
+                <div id="summaries-results" class="results-container"></div>
+            </section>
+
+            <!-- Beginner Insights Section -->
+            <section id="beginner" class="section">
+                <div class="beginner-container">
+                    <h2>Beginner Insights</h2>
+                    <p>Personalized learning recommendations based on what beginners are actually asking about in ML/DS communities</p>
+                    <div class="beginner-controls">
+                        <select id="beginner-days" class="filter-select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                        <button onclick="loadBeginnerInsights()" class="btn btn-primary">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div id="beginner-results" class="results-container"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 ML Learning Hub - Data Science & Machine Learning Analytics</p>
+        </div>
+    </footer>
+
+    <script>
+        // Simple test to ensure page loads
+        console.log('Reddit Summarizer loaded successfully!');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM ready, loading monitoring data...');
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
