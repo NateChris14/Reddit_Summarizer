@@ -33,7 +33,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd api
-          pytest test_api/ -v
+          pytest -m unit
 
       - name: Validate frontend files
         run: |
