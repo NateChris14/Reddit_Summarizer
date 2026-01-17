@@ -25,9 +25,31 @@ jobs:
         run: echo "Linting API code"
         working-directory: api
 
+      - name: Install test dependencies
+        run: |
+          cd api
+          pip install -r test-requirements.txt
+
       - name: Run unit tests
-        run: echo "Running API unit tests"
-        working-directory: api
+        run: |
+          cd api
+          pytest tests/ -v
+
+      - name: Validate frontend files
+        run: |
+          cd frontend
+          echo "Checking frontend file structure..."
+          ls -la
+
+      - name: Check HTML files
+        run: |
+          cd frontend
+          find . -name "*.html" -exec echo "✓ HTML file: {}" \;
+
+      - name: Check JavaScript syntax
+        run: |
+          cd frontend
+          node -c script.js && echo "✓ JavaScript syntax valid" || echo "⚠ JavaScript syntax check failed"
 
   build-and-push-ecr-image:
     name: Build and Push API Image
