@@ -27,6 +27,21 @@ function setupNavigation() {
     });
 }
 
+// Navigate to section from feature cards
+function navigateToSection(sectionId) {
+    showSection(sectionId);
+    // Update active nav link
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+    const activeLink = document.querySelector(`[href="#${sectionId}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+    // Smooth scroll to section
+    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+}
+
 function showSection(sectionId) {
     // Hide all sections
     sections.forEach(section => {

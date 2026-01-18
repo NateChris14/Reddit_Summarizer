@@ -374,13 +374,16 @@ body {
     background: var(--surface);
     padding: 2rem;
     border-radius: var(--border-radius);
-    text-align: center;
     box-shadow: var(--shadow);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
 }
 
 .feature-card:hover {
     transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: var(--primary);
 }
 
 .feature-icon {
